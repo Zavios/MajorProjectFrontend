@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { SquarePen, Stethoscope } from "lucide-react";
+import useAuth from "../hooks/useAuth";
+import ApiService from "../API/api_service";
 
 /* ── Gear icon ── */
 const GearIcon = () => (
@@ -19,7 +23,8 @@ const GearIcon = () => (
 
 /* ── NavItem ── */
 export function NavItem({ item, state }) {
-  const { link, title } = item;
+  const { id, title } = item;
+  const {} = useAuth();
 
   if (state === "loading") {
     return (
@@ -29,7 +34,7 @@ export function NavItem({ item, state }) {
 
   return (
     <a
-      href={link}
+      href={`/prediction/${id}`}
       className="group flex items-center px-3 py-2 rounded-lg
             text-white no-underline cursor-pointer
             transition-all duration-150
@@ -46,6 +51,25 @@ export function NavItem({ item, state }) {
 
 /* ── Navbar / Sidebar ── */
 export default function Navbar({ navItems = [], state = "idle" }) {
+  const [chats, setChats] = useState([]);
+
+  const getChats = async () => {
+    try {
+      const response = await ApiService.get("/chat/getchats");
+      console.log(response);
+
+      if (response.success) {
+        setChats(response.chats);
+      }
+    } catch (error) {
+      ApiService.handleError(error);
+    }
+  };
+
+  useEffect(() => {
+    getChats();
+  }, []);
+
   return (
     <aside className="flex flex-col w-[220px] min-w-[220px] h-screen bg-black text-white font-sans text-sm py-5 px-2 box-border">
       {/* Header */}
@@ -55,11 +79,43 @@ export default function Navbar({ navItems = [], state = "idle" }) {
         </span>
       </div>
 
+      {/* New Upload */}
+      <a
+        href="/newchat"
+        className="relative flex items-center gap-2.5 mx-1 mb-4 px-3 py-3
+                   text-white no-underline text-[13.5px] font-medium
+                   bg-[#0a0a0a] border border-white/10
+                   transition-all duration-150
+
+                   hover:border-white hover:border-2
+                   active:scale-[0.97]"
+      >
+        <span className="absolute -top-px -left-px w-3 h-3 border-t-2 border-l-2 border-white" />
+        <span className="absolute -bottom-px -right-px w-3 h-3 border-b-2 border-r-2 border-white" />
+        <SquarePen size={16} strokeWidth={2} className="text-neutral-300" />
+        New Upload
+      </a>
+
+      {/* Doctor Workbench */}
+      {/* <a
+        href="/doctor"
+        className="flex items-center gap-2.5 mx-1 mb-4 px-3 py-2.5
+                   text-neutral-400 no-underline text-[13px] font-medium
+                   rounded-lg transition-all duration-150
+                   hover:bg-neutral-800 hover:text-white"
+      >
+        <Stethoscope size={16} strokeWidth={2} className="text-neutral-500" />
+        Doctor Workbench
+      </a> */}
+
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-2.5 pr-0.5 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
-        {navItems.map((item, index) => (
-          <NavItem key={item.id ?? index} item={item} state={state} />
-        ))}
+        {chats.map(
+          (item, index) => (
+            console.log("item", item),
+            (<NavItem key={item.id ?? index} item={item} state={state} />)
+          ),
+        )}
       </nav>
 
       {/* Footer */}
